@@ -11,7 +11,7 @@ import {
 import { authAPI } from "../../services/api";
 import { setUser } from "../../utils/auth";
 
-const isDevelopment = import.meta.env.VITE_SHOW_DEV_LOGIN === "true";
+const isDevelopment = true; // 개발 모드 강제 활성화
 
 export default function Login() {
   const navigate = useNavigate();
@@ -60,11 +60,21 @@ export default function Login() {
       setIsLoading(true);
       setError("");
 
-      const user = await authAPI.login(accessToken);
-      setUser(user);
+      // Mock 로그인 (백엔드 없이 테스트용)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const mockUser = {
+        id: "mock-user-123",
+        username: "TestUser",
+        email: "test@example.com",
+        avatarUrl: "",
+        accessToken: accessToken,
+      };
+
+      setUser(mockUser);
       navigate("/dashboard");
     } catch (err) {
-      setError("로그인에 실패했습니다. Access Token을 확인해주세요.");
+      setError("로그인에 실패했습니다.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -76,7 +86,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 relative overflow-hidden">
-      {/* 배경 애니메이션 원들 */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -85,26 +94,18 @@ export default function Login() {
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="inline-block mb-6 relative">
-            {/* 메인 로고 카드 */}
             <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center relative overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
-              {/* 호버 시 그라데이션 효과 */}
               <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-
-              {/* Tally 텍스트 */}
               <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent relative z-10">
                 Tally
               </div>
             </div>
-
-            {/* 회전하는 데이터 아이콘들 */}
             <div className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-500">
               <CurrentIconComponent
                 className={`w-5 h-5 ${currentColor} animate-bounce`}
               />
             </div>
           </div>
-
-          {/* 타이틀 - 페이드인 애니메이션 */}
           <h1 className="text-4xl font-bold text-white mb-3 animate-fade-in">
             Tally Analytics
           </h1>
@@ -115,7 +116,6 @@ export default function Login() {
 
         <div className="card bg-white hover:shadow-2xl transition-shadow duration-300">
           <div className="space-y-4">
-            {/* GitHub 로그인 버튼 */}
             <button
               onClick={handleGitHubLogin}
               disabled={isLoading}
@@ -134,7 +134,6 @@ export default function Login() {
               )}
             </button>
 
-            {/* 개발 모드에서만 Access Token 로그인 표시 */}
             {isDevelopment && (
               <>
                 <div className="relative">
@@ -163,14 +162,14 @@ export default function Login() {
                         htmlFor="token"
                         className="block text-sm font-medium text-gray-700 mb-2"
                       >
-                        GitHub Personal Access Token
+                        GitHub Personal Access Token (테스트용 - 아무거나 입력)
                       </label>
                       <input
                         id="token"
                         type="password"
                         value={accessToken}
                         onChange={(e) => setAccessToken(e.target.value)}
-                        placeholder="ghp_xxxxxxxxxxxx"
+                        placeholder="test123 (아무 텍스트)"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                         disabled={isLoading}
                       />
@@ -208,7 +207,6 @@ export default function Login() {
               </>
             )}
 
-            {/* 에러 메시지 - 슬라이드 인 효과 */}
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-slide-in">
                 <p className="text-sm text-red-600">{error}</p>

@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import { isAuthenticated } from './utils/auth';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import { isAuthenticated } from "./utils/auth";
 
-// 인증 가드 컴포넌트
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!isAuthenticated()) {
     return <Navigate to="/" replace />;
@@ -10,7 +10,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// 로그인 페이지 가드 (이미 로그인된 경우 대시보드로)
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   if (isAuthenticated()) {
     return <Navigate to="/dashboard" replace />;
@@ -34,8 +33,18 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analysis/:owner/:repo"
+          element={
+            <ProtectedRoute>
               <div className="min-h-screen flex items-center justify-center">
-                <h1 className="text-4xl font-bold text-primary-600">Dashboard (Coming Soon)</h1>
+                <h1 className="text-4xl font-bold text-primary-600">
+                  Analysis Page (Coming Soon)
+                </h1>
               </div>
             </ProtectedRoute>
           }
