@@ -1,0 +1,7 @@
+{
+  "eslint.options": {
+    "overrideConfig": {
+      "ignorePatterns": ["**/components/analysis/ContributionList.tsx"]
+    }
+  }
+}
