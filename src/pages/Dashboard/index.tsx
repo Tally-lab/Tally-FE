@@ -6,12 +6,13 @@ import RepositoryCard from "../../components/dashboard/RepositoryCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import EmptyState from "../../components/common/EmptyState";
 import type { Repository } from "../../types";
+import { repositoryAPI } from "../../services/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRepositories();
@@ -20,92 +21,36 @@ export default function Dashboard() {
   const fetchRepositories = async () => {
     try {
       setIsLoading(true);
-      setError("");
+      setError(null);
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const mockRepos: Repository[] = [
-        {
-          id: "1",
-          name: "Tally-BE",
-          fullName: "Tally-lab/Tally-BE",
-          description:
-            "GitHub 기여도 분석 백엔드 - Spring Boot, GitHub API 연동",
-          url: "https://github.com/Tally-lab/Tally-BE",
-          owner: "Tally-lab",
-          isPrivate: false,
-          defaultBranch: "main",
-          updatedAt: "2025-10-08T00:00:00Z",
-        },
-        {
-          id: "2",
-          name: "Tally-FE",
-          fullName: "Tally-lab/Tally-FE",
-          description:
-            "GitHub 기여도 분석 프론트엔드 - React, TypeScript, Tailwind CSS",
-          url: "https://github.com/Tally-lab/Tally-FE",
-          owner: "Tally-lab",
-          isPrivate: false,
-          defaultBranch: "main",
-          updatedAt: "2025-10-08T00:00:00Z",
-        },
-        {
-          id: "3",
-          name: "my-awesome-project",
-          fullName: "username/my-awesome-project",
-          description: "멋진 개인 프로젝트 입니다",
-          url: "https://github.com/username/my-awesome-project",
-          owner: "username",
-          isPrivate: true,
-          defaultBranch: "develop",
-          updatedAt: "2025-10-05T00:00:00Z",
-        },
-        {
-          id: "4",
-          name: "algorithm-practice",
-          fullName: "username/algorithm-practice",
-          description: "알고리즘 문제 풀이 연습",
-          url: "https://github.com/username/algorithm-practice",
-          owner: "username",
-          isPrivate: false,
-          defaultBranch: "main",
-          updatedAt: "2025-10-01T00:00:00Z",
-        },
-        {
-          id: "5",
-          name: "react-component-library",
-          fullName: "username/react-component-library",
-          description: "재사용 가능한 React 컴포넌트 라이브러리",
-          url: "https://github.com/username/react-component-library",
-          owner: "username",
-          isPrivate: false,
-          defaultBranch: "main",
-          updatedAt: "2025-09-28T00:00:00Z",
-        },
-        {
-          id: "6",
-          name: "data-analysis-toolkit",
-          fullName: "username/data-analysis-toolkit",
-          description: "Python 기반 데이터 분석 도구 모음",
-          url: "https://github.com/username/data-analysis-toolkit",
-          owner: "username",
-          isPrivate: true,
-          defaultBranch: "main",
-          updatedAt: "2025-09-20T00:00:00Z",
-        },
-      ];
-
-      setRepositories(mockRepos);
-    } catch (err) {
+      // 실제 백엔드 API 호출
+      const repos = await repositoryAPI.getUserRepositories();
+      setRepositories(repos);
+    } catch (err: any) {
       console.error("레포지토리 조회 실패:", err);
-      setError("레포지토리 목록을 불러오는데 실패했습니다.");
+
+      // 에러 메시지 세분화
+      if (err.response?.status === 401) {
+        setError("인증이 만료되었습니다. 다시 로그인해주세요.");
+      } else if (err.response?.status === 429) {
+        setError(
+          "GitHub API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요."
+        );
+      } else if (err.code === "ECONNABORTED") {
+        setError("요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.");
+      } else {
+        setError("레포지토리 목록을 불러오는데 실패했습니다.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRepositoryClick = (repo: Repository) => {
-    navigate(`/analysis/${repo.owner}/${repo.name}`);
+    // ✅ owner가 객체면 login 추출, 문자열이면 그대로 사용
+    const ownerLogin =
+      typeof repo.owner === "object" ? repo.owner.login : repo.owner;
+    navigate(`/analysis/${ownerLogin}/${repo.name}`);
   };
 
   return (
