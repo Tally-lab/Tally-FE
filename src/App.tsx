@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Analysis from "./pages/Analysis";
 import { isAuthenticated } from "./utils/auth";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -41,11 +42,7 @@ function App() {
           path="/analysis/:owner/:repo"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen flex items-center justify-center">
-                <h1 className="text-4xl font-bold text-primary-600">
-                  Analysis Page (Coming Soon)
-                </h1>
-              </div>
+              <Analysis /> {/* 여기만 수정! */}
             </ProtectedRoute>
           }
         />
