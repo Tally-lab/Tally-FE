@@ -10,6 +10,15 @@ export interface User {
 }
 
 /**
+ * GitHub Owner 정보
+ */
+export interface Owner {
+  login: string;
+  id: number;
+  avatarUrl?: string;
+}
+
+/**
  * GitHub 레포지토리 정보
  */
 export interface Repository {
@@ -18,7 +27,7 @@ export interface Repository {
   fullName: string;
   description?: string;
   url: string;
-  owner: string;
+  owner: Owner | string; // Owner 객체 또는 string 허용
   isPrivate?: boolean;
   defaultBranch?: string;
   createdAt?: string;
@@ -41,6 +50,8 @@ export interface ContributionStats {
   hourlyActivity?: Record<number, number>;
   dailyActivity?: Record<string, number>;
   roleDistribution?: Record<string, RoleStats>;
+  pullRequests?: PullRequest[];
+  issues?: Issue[];
   analyzedAt: string;
 }
 
@@ -110,7 +121,7 @@ export interface Commit {
  */
 export interface CommitFile {
   filename: string;
-  status: 'added' | 'modified' | 'removed';
+  status: "added" | "modified" | "removed";
   additions: number;
   deletions: number;
   changes: number;
@@ -132,7 +143,7 @@ export interface Report {
 /**
  * 리포트 포맷 (enum 대신 union type 사용)
  */
-export type ReportFormat = 'MARKDOWN' | 'HTML' | 'PNG';
+export type ReportFormat = "MARKDOWN" | "HTML" | "PNG";
 
 /**
  * API 에러 응답
