@@ -16,6 +16,17 @@ export interface Owner {
   login: string;
   id: number;
   avatarUrl?: string;
+  type?: "User" | "Organization";
+}
+
+/**
+ * Parent Repository 정보 (Fork의 원본)
+ */
+export interface ParentRepository {
+  name: string;
+  fullName: string;
+  owner: Owner;
+  url: string;
 }
 
 /**
@@ -27,11 +38,55 @@ export interface Repository {
   fullName: string;
   description?: string;
   url: string;
-  owner: Owner | string; // Owner 객체 또는 string 허용
+  owner: Owner | string;
   isPrivate?: boolean;
   defaultBranch?: string;
   createdAt?: string;
   updatedAt?: string;
+  fork?: boolean;
+  parent?: ParentRepository;
+}
+
+/**
+ * Organization 정보
+ */
+export interface Organization {
+  id: number;
+  login: string;
+  avatarUrl?: string;
+  description?: string;
+  url?: string;
+  htmlUrl?: string;
+  publicRepos?: number;
+}
+
+/**
+ * Repository Contribution 정보
+ */
+export interface RepositoryContribution {
+  name: string;
+  fullName: string;
+  url: string;
+  totalCommits: number;
+  userCommits: number;
+  contributionPercentage: number;
+  lastUpdated?: string;
+}
+
+/**
+ * Organization Stats 정보
+ */
+export interface OrganizationStats {
+  organizationName: string;
+  avatarUrl?: string;
+  description?: string;
+  totalRepositories: number;
+  totalCommits: number;
+  userCommits: number;
+  contributionPercentage: number;
+  repositories: RepositoryContribution[];
+  totalIssues: number;
+  totalPullRequests: number;
 }
 
 /**

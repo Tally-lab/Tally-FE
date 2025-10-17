@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import Analysis from "./pages/Analysis";
+import OrganizationDetail from "./pages/OrganizationDetail";
 import { isAuthenticated } from "./utils/auth";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -19,12 +20,20 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} /> {}
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organization/:orgName"
+          element={
+            <ProtectedRoute>
+              <OrganizationDetail />
             </ProtectedRoute>
           }
         />
