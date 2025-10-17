@@ -1,4 +1,4 @@
-import { GitBranch, Lock, Unlock, Calendar } from "lucide-react";
+import { GitBranch, Lock, Unlock, Calendar, GitFork } from "lucide-react";
 import type { Repository } from "../../types";
 
 interface RepositoryCardProps {
@@ -43,6 +43,22 @@ export default function RepositoryCard({
             )}
           </div>
         </div>
+
+        {/* Fork 정보 추가 */}
+        {repository.fork && repository.parent && (
+          <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mb-3">
+            <GitFork className="w-3.5 h-3.5" />
+            <span>
+              Forked from{" "}
+              <span className="font-medium">
+                {typeof repository.parent.owner === "object"
+                  ? repository.parent.owner.login
+                  : repository.parent.owner}
+                /{repository.parent.name}
+              </span>
+            </span>
+          </div>
+        )}
 
         <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-grow">
           {repository.description || "설명이 없습니다."}

@@ -216,7 +216,7 @@ export default function Login() {
         </div>
 
         <div className="mt-8 text-center text-white/80 text-sm">
-          <p>2024 Tally Analytics. All rights reserved.</p>
+          <p>2025 Tally Analytics. All rights reserved.</p>
         </div>
       </div>
     </div>
