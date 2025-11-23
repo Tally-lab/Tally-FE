@@ -1,0 +1,231 @@
+/**
+ * 사용자 정보
+ */
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+  avatarUrl?: string;
+  accessToken: string;
+}
+
+/**
+ * GitHub Owner 정보
+ */
+export interface Owner {
+  login: string;
+  id: number;
+  avatarUrl?: string;
+  type?: "User" | "Organization";
+}
+
+/**
+ * Parent Repository 정보 (Fork의 원본)
+ */
+export interface ParentRepository {
+  name: string;
+  fullName: string;
+  owner: Owner;
+  url: string;
+}
+
+/**
+ * GitHub 레포지토리 정보
+ */
+export interface Repository {
+  id: string;
+  name: string;
+  fullName: string;
+  description?: string;
+  url: string;
+  owner: Owner | string;
+  isPrivate?: boolean;
+  defaultBranch?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  fork?: boolean;
+  parent?: ParentRepository;
+}
+
+/**
+ * Organization 정보
+ */
+export interface Organization {
+  id: number;
+  login: string;
+  avatarUrl?: string;
+  description?: string;
+  url?: string;
+  htmlUrl?: string;
+  publicRepos?: number;
+}
+
+/**
+ * Repository Contribution 정보
+ */
+export interface RepositoryContribution {
+  name: string;
+  fullName: string;
+  url: string;
+  totalCommits: number;
+  userCommits: number;
+  contributionPercentage: number;
+  lastUpdated?: string;
+}
+
+/**
+ * Team Member 정보
+ */
+export interface TeamMember {
+  login: string;
+  avatarUrl?: string;
+  commits: number;
+  contributionPercentage: number;
+}
+
+/**
+ * Organization Stats 정보
+ */
+export interface OrganizationStats {
+  organizationName: string;
+  avatarUrl?: string;
+  description?: string;
+  totalRepositories: number;
+  totalCommits: number;
+  userCommits: number;
+  contributionPercentage: number;
+  repositories: RepositoryContribution[];
+  totalIssues: number;
+  totalPullRequests: number;
+  teamMembers?: TeamMember[];
+}
+
+/**
+ * 기여도 통계
+ */
+export interface ContributionStats {
+  id: string;
+  userId: string;
+  repositoryFullName: string;
+  totalCommits: number;
+  userCommits: number;
+  commitPercentage: number;
+  additions?: number;
+  deletions?: number;
+  languageDistribution?: Record<string, number>;
+  hourlyActivity?: Record<number, number>;
+  dailyActivity?: Record<string, number>;
+  roleDistribution?: Record<string, RoleStats>;
+  pullRequests?: PullRequest[];
+  issues?: Issue[];
+  commitMessages?: string[];  // AI 분석용 커밋 메시지 (최근 30개)
+  analyzedAt: string;
+}
+
+/**
+ * 역할별 통계
+ */
+export interface RoleStats {
+  roleName: string;
+  commitCount: number;
+  percentage: number;
+}
+
+/**
+ * Pull Request 정보
+ */
+export interface PullRequest {
+  number: number;
+  title: string;
+  state: string;
+  htmlUrl: string;
+  createdAt: string;
+  closedAt?: string;
+  mergedAt?: string;
+  user?: User;
+  body?: string;
+}
+
+/**
+ * Issue 정보
+ */
+export interface Issue {
+  number: number;
+  title: string;
+  state: string;
+  htmlUrl: string;
+  createdAt: string;
+  closedAt?: string;
+  user?: User;
+  body?: string;
+}
+
+/**
+ * 커밋 정보
+ */
+export interface Commit {
+  sha: string;
+  commit: {
+    author: {
+      name: string;
+      email: string;
+      date: string;
+    };
+    committer: {
+      name: string;
+      email: string;
+      date: string;
+    };
+    message: string;
+  };
+  author?: User;
+  committer?: User;
+  files?: CommitFile[];
+}
+
+/**
+ * 커밋 파일 정보
+ */
+export interface CommitFile {
+  filename: string;
+  status: "added" | "modified" | "removed";
+  additions: number;
+  deletions: number;
+  changes: number;
+  blobUrl?: string;
+}
+
+/**
+ * 리포트 정보
+ */
+export interface Report {
+  id: string;
+  userId: string;
+  contributionStatsId: string;
+  format: ReportFormat;
+  content: string;
+  generatedAt: string;
+}
+
+/**
+ * 리포트 포맷 (enum 대신 union type 사용)
+ */
+export type ReportFormat = "MARKDOWN" | "HTML" | "PNG";
+
+/**
+ * API 에러 응답
+ */
+export interface ApiError {
+  message: string;
+  status?: number;
+  error?: string;
+}
+
+/**
+ * API 성공 응답 (공통)
+ */
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: number;
+}
