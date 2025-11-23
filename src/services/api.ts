@@ -7,8 +7,8 @@ import type {
   OrganizationStats,
 } from "../types";
 
-// 백엔드 API 기본 URL
-const API_BASE_URL = "http://localhost:8080";
+// 백엔드 API 기본 URL (환경변수 또는 기본값)
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://qtenyp1zg3.execute-api.ap-northeast-2.amazonaws.com/Prod";
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -134,49 +134,64 @@ export const analysisAPI = {
     return response.data;
   },
 
-  // Markdown 리포트 다운로드
+  // Markdown 리포트 다운로드 (POST 방식)
   downloadMarkdownReport: async (
     owner: string,
     repo: string,
-    username?: string
-  ): Promise<string> => {
-    const params = username ? { username } : {};
-    const response = await api.get(
-      `/analysis/${owner}/${repo}/report/markdown`,
-      {
-        params,
-        responseType: "text",
-      }
-    );
-    return response.data;
-  },
-
-  // HTML 리포트 다운로드
-  downloadHtmlReport: async (
-    owner: string,
-    repo: string,
-    username?: string
-  ): Promise<string> => {
-    const params = username ? { username } : {};
-    const response = await api.get(`/analysis/${owner}/${repo}/report/html`, {
-      params,
-      responseType: "text",
+    username: string
+  ): Promise<{ content: string }> => {
+    const response = await api.post("/reports/markdown", {
+      owner,
+      repo,
+      username,
     });
     return response.data;
   },
 
-  // 기존 downloadReport (호환성 유지)
-  downloadReport: async (
+  // HTML 리포트 다운로드 (POST 방식)
+  downloadHtmlReport: async (
     owner: string,
     repo: string,
-    format: "markdown" | "html"
-  ): Promise<Blob> => {
-    const response = await api.get(
-      `/analysis/${owner}/${repo}/report/${format}`,
-      {
-        responseType: "blob",
-      }
-    );
+    username: string
+  ): Promise<{ content: string }> => {
+    const response = await api.post("/reports/html", {
+      owner,
+      repo,
+      username,
+    });
+    return response.data;
+  },
+
+  // PDF 리포트 다운로드 (POST 방식, Base64 인코딩)
+  downloadPdfReport: async (
+    owner: string,
+    repo: string,
+    username: string
+  ): Promise<{ content: string; filename: string; contentType: string; encoding: string }> => {
+    const response = await api.post("/reports/pdf", {
+      owner,
+      repo,
+      username,
+    });
+    return response.data;
+  },
+};
+
+/**
+ * AI 분석 관련 API
+ */
+export const aiAPI = {
+  // AI 기여도 요약
+  analyzeWithAI: async (
+    owner: string,
+    repo: string,
+    username: string
+  ): Promise<{ stats: ContributionStats; aiSummary: string }> => {
+    const response = await api.post("/ai/analyze", {
+      owner,
+      repo,
+      username,
+    });
     return response.data;
   },
 };

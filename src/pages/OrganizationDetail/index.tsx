@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, GitCommit, AlertCircle } from "lucide-react";
+import { ArrowLeft, Building2, GitCommit, AlertCircle, Users } from "lucide-react";
 import Header from "../../components/layout/Header";
 import RepositoryCard from "../../components/dashboard/RepositoryCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -33,9 +33,14 @@ export default function OrganizationDetail() {
       setIsLoading(true);
       setError(null);
 
+      // user가 없을 경우 localStorage에서 직접 가져오기
+      const currentUser = getUser();
+      const username = currentUser?.username;
+      console.log("Fetching org stats with username:", username);
+
       const data = await organizationAPI.getOrganizationStats(
         orgName,
-        user?.username
+        username
       );
       setStats(data);
     } catch (err: any) {
@@ -125,12 +130,63 @@ export default function OrganizationDetail() {
         {/* 전체 통계 */}
         <OrganizationStats stats={stats} />
 
+        {/* 팀원 기여도 */}
+        {stats.teamMembers && stats.teamMembers.length > 0 && (
+          <section className="mt-12">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <Users className="w-6 h-6" />
+              팀원 기여도
+            </h3>
+            <p className="text-gray-500 mb-6">
+              총 {stats.teamMembers.length}명의 기여자
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stats.teamMembers.map((member) => (
+                <div
+                  key={member.login}
+                  className="card p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
+                >
+                  {member.avatarUrl ? (
+                    <img
+                      src={member.avatarUrl}
+                      alt={member.login}
+                      className="w-12 h-12 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-gray-500 font-medium">
+                        {member.login.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {member.login}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {member.commits} commits
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-blue-600">
+                      {member.contributionPercentage.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* 레포지토리 목록 */}
         <section className="mt-12">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">
-            기여한 레포지토리 ({stats.totalRepositories})
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            레포지토리 목록
           </h3>
-          {stats.repositories.length === 0 ? (
+          <p className="text-gray-500 mb-6">
+            기여한 레포지토리 {stats.totalRepositories ?? 0}개 / 전체 {stats.repositories?.length ?? 0}개
+          </p>
+          {!stats.repositories || stats.repositories.length === 0 ? (
             <div className="p-8 bg-white rounded-lg border border-gray-200 text-center">
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">
@@ -152,7 +208,6 @@ export default function OrganizationDetail() {
                       </h4>
                       <p className="text-sm text-gray-500">{repo.fullName}</p>
                     </div>
-                    {/* 수정된 부분: <a> 태그 누락되어 있었음 */}
                     <a
                       href={repo.url}
                       target="_blank"
@@ -171,7 +226,7 @@ export default function OrganizationDetail() {
                         <span>내 커밋</span>
                       </div>
                       <p className="text-2xl font-bold text-gray-900">
-                        {repo.userCommits}
+                        {repo.userCommits ?? 0}
                       </p>
                     </div>
                     <div>
@@ -180,13 +235,13 @@ export default function OrganizationDetail() {
                         <span>전체 커밋</span>
                       </div>
                       <p className="text-2xl font-bold text-gray-900">
-                        {repo.totalCommits}
+                        {repo.totalCommits ?? 0}
                       </p>
                     </div>
                     <div>
                       <div className="text-sm text-gray-500 mb-1">기여도</div>
                       <p className="text-2xl font-bold text-blue-600">
-                        {repo.contributionPercentage}%
+                        {(repo.contributionPercentage ?? 0).toFixed(1)}%
                       </p>
                     </div>
                   </div>

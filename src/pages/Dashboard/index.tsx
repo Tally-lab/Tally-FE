@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderGit2, Building2 } from "lucide-react";
+import { FolderGit2, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import Header from "../../components/layout/Header";
 import RepositoryCard from "../../components/dashboard/RepositoryCard";
 import OrganizationCard from "../../components/dashboard/OrganizationCard";
@@ -10,13 +10,7 @@ import type { Repository, Organization } from "../../types";
 import { repositoryAPI, organizationAPI } from "../../services/api";
 import { getUser } from "../../utils/auth";
 
-// 가상 조직 인터페이스 (Fork 기반)
-interface VirtualOrganization {
-  login: string;
-  repositories: Repository[];
-  isVirtual: boolean;
-  avatarUrl?: string;
-}
+const INITIAL_DISPLAY_COUNT = 6;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -24,6 +18,7 @@ export default function Dashboard() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAllPersonal, setShowAllPersonal] = useState(false);
 
   const user = getUser();
 
@@ -62,82 +57,37 @@ export default function Dashboard() {
     }
   };
 
-  // ✅ 레포지토리 클릭: 실제 owner 사용
   const handleRepositoryClick = (repo: Repository) => {
     const ownerLogin =
       typeof repo.owner === "object" ? repo.owner.login : repo.owner;
-
-    console.log(`레포 클릭: ${ownerLogin}/${repo.name}`);
     navigate(`/analysis/${ownerLogin}/${repo.name}`);
   };
 
-  // ✅ 조직 클릭: 조직 상세 페이지로
   const handleOrganizationClick = (orgLogin: string) => {
-    console.log(`조직 클릭: ${orgLogin}`);
     navigate(`/organization/${orgLogin}`);
   };
 
-  // 조직 분류 및 가상 조직 생성
-  const realOrganizations = new Set(organizations.map((org) => org.login));
-  const virtualOrgsMap = new Map<string, VirtualOrganization>();
-  const organizationRepos: Repository[] = [];
-  const personalRepos: Repository[] = [];
-
-  repositories.forEach((repo) => {
+  // 개인 레포지토리만 필터링 (조직 레포는 조직 페이지에서 확인)
+  const personalRepos = repositories.filter((repo) => {
     const ownerLogin =
       typeof repo.owner === "object" ? repo.owner.login : repo.owner;
     const ownerType = typeof repo.owner === "object" ? repo.owner.type : "User";
 
-    // 실제 조직 소유 레포
-    if (ownerType === "Organization") {
-      organizationRepos.push(repo);
-      return;
-    }
+    // 조직 소유 레포 제외
+    if (ownerType === "Organization") return false;
 
-    // Fork된 레포 → 가상 조직으로 그룹핑
+    // Fork이고 원본이 조직인 경우도 제외
     if (repo.fork && repo.parent && typeof repo.parent.owner === "object") {
-      const parentOrgLogin = repo.parent.owner.login;
-      const parentOrgType = repo.parent.owner.type;
-
-      // 원본이 조직인 경우에만
-      if (parentOrgType === "Organization") {
-        organizationRepos.push(repo);
-
-        // 이미 실제 조직이 아닌 경우에만 가상 조직 생성
-        if (!realOrganizations.has(parentOrgLogin)) {
-          if (!virtualOrgsMap.has(parentOrgLogin)) {
-            virtualOrgsMap.set(parentOrgLogin, {
-              login: parentOrgLogin,
-              repositories: [],
-              isVirtual: true,
-              avatarUrl: repo.parent.owner.avatarUrl,
-            });
-          }
-          virtualOrgsMap.get(parentOrgLogin)!.repositories.push(repo);
-        }
-        return;
-      }
+      if (repo.parent.owner.type === "Organization") return false;
     }
 
-    // 개인 레포
-    personalRepos.push(repo);
+    return true;
   });
 
-  // 실제 조직 + 가상 조직 합치기
-  const allOrganizations = [
-    ...organizations.map((org) => ({
-      ...org,
-      isVirtual: false,
-    })),
-    ...Array.from(virtualOrgsMap.values()).map((vOrg) => ({
-      id: Math.random(), // 임시 ID
-      login: vOrg.login,
-      avatarUrl: vOrg.avatarUrl,
-      description: `${vOrg.repositories.length}개의 Fork된 레포지토리`,
-      isVirtual: true,
-      publicRepos: vOrg.repositories.length,
-    })),
-  ];
+  // 표시할 개인 레포지토리
+  const displayedPersonalRepos = showAllPersonal
+    ? personalRepos
+    : personalRepos.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -147,7 +97,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">대시보드</h2>
           <p className="text-gray-600">
-            조직을 선택하거나 레포지토리를 분석하세요
+            조직을 선택하면 팀원 기여도를 확인할 수 있습니다
           </p>
         </div>
 
@@ -167,7 +117,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {!isLoading && !error && repositories.length === 0 && (
+        {!isLoading && !error && repositories.length === 0 && organizations.length === 0 && (
           <EmptyState
             icon={FolderGit2}
             title="데이터가 없습니다"
@@ -179,19 +129,23 @@ export default function Dashboard() {
           />
         )}
 
-        {!isLoading && !error && repositories.length > 0 && (
+        {!isLoading && !error && (repositories.length > 0 || organizations.length > 0) && (
           <>
-            {/* 조직 섹션 (실제 + 가상) */}
-            {allOrganizations.length > 0 && (
+            {/* 내 조직 섹션 */}
+            {organizations.length > 0 && (
               <section className="mb-12">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Building2 className="w-6 h-6" />내 조직
+                <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <Building2 className="w-6 h-6" />
+                  내 조직
                   <span className="text-sm font-normal text-gray-500">
-                    ({allOrganizations.length})
+                    ({organizations.length})
                   </span>
                 </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  조직을 클릭하면 팀원들의 기여도를 확인할 수 있습니다
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allOrganizations.map((org) => (
+                  {organizations.map((org) => (
                     <OrganizationCard
                       key={org.login}
                       organization={org}
@@ -202,38 +156,18 @@ export default function Dashboard() {
               </section>
             )}
 
-            {/* 조직/협업 프로젝트 섹션 */}
-            {organizationRepos.length > 0 && (
-              <section className="mb-12">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  🏢 조직 & 협업 프로젝트
-                  <span className="text-sm font-normal text-gray-500">
-                    ({organizationRepos.length})
-                  </span>
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {organizationRepos.map((repo) => (
-                    <RepositoryCard
-                      key={repo.id}
-                      repository={repo}
-                      onClick={() => handleRepositoryClick(repo)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* 개인 프로젝트 섹션 */}
             {personalRepos.length > 0 && (
               <section>
                 <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  👤 개인 프로젝트
+                  <FolderGit2 className="w-6 h-6" />
+                  개인 프로젝트
                   <span className="text-sm font-normal text-gray-500">
                     ({personalRepos.length})
                   </span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {personalRepos.map((repo) => (
+                  {displayedPersonalRepos.map((repo) => (
                     <RepositoryCard
                       key={repo.id}
                       repository={repo}
@@ -241,6 +175,28 @@ export default function Dashboard() {
                     />
                   ))}
                 </div>
+
+                {/* 더보기/접기 버튼 */}
+                {personalRepos.length > INITIAL_DISPLAY_COUNT && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={() => setShowAllPersonal(!showAllPersonal)}
+                      className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      {showAllPersonal ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          접기
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          더보기 ({personalRepos.length - INITIAL_DISPLAY_COUNT}개 더)
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </section>
             )}
           </>

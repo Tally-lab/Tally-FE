@@ -74,6 +74,16 @@ export interface RepositoryContribution {
 }
 
 /**
+ * Team Member 정보
+ */
+export interface TeamMember {
+  login: string;
+  avatarUrl?: string;
+  commits: number;
+  contributionPercentage: number;
+}
+
+/**
  * Organization Stats 정보
  */
 export interface OrganizationStats {
@@ -87,6 +97,7 @@ export interface OrganizationStats {
   repositories: RepositoryContribution[];
   totalIssues: number;
   totalPullRequests: number;
+  teamMembers?: TeamMember[];
 }
 
 /**
@@ -107,6 +118,7 @@ export interface ContributionStats {
   roleDistribution?: Record<string, RoleStats>;
   pullRequests?: PullRequest[];
   issues?: Issue[];
+  commitMessages?: string[];  // AI 분석용 커밋 메시지 (최근 30개)
   analyzedAt: string;
 }
 
