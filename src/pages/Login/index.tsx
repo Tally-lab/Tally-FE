@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Github,
   Loader2,
-  KeyRound,
+  Lock,
   BarChart3,
-  TrendingUp,
-  Activity,
 } from "lucide-react";
 import { authAPI } from "../../services/api";
 import { setUser } from "../../utils/auth";
 
 const isDevelopment = true; // 개발 모드 강제 활성화
+const ACCESS_CODE = "1024"; // 관리자 접근 코드
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,20 +18,8 @@ export default function Login() {
   const [error, setError] = useState<string>("");
   const [accessToken, setAccessToken] = useState("");
   const [showTokenInput, setShowTokenInput] = useState(false);
-  const [currentIcon, setCurrentIcon] = useState(0);
-
-  const icons = [
-    { Icon: BarChart3, color: "text-primary-500" },
-    { Icon: TrendingUp, color: "text-secondary-500" },
-    { Icon: Activity, color: "text-primary-600" },
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIcon((prev) => (prev + 1) % icons.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  const [accessCode, setAccessCode] = useState("");
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   const handleGitHubLogin = async () => {
     try {
@@ -81,68 +68,88 @@ export default function Login() {
     }
   };
 
-  const CurrentIconComponent = icons[currentIcon].Icon;
-  const currentColor = icons[currentIcon].color;
-
   return (
-    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-block mb-6 relative">
-            <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center relative overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
-              <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-              <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent relative z-10">
-                Tally
-              </div>
-            </div>
-            <div className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-500">
-              <CurrentIconComponent
-                className={`w-5 h-5 ${currentColor} animate-bounce`}
-              />
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-3 animate-fade-in">
-            Tally Analytics
-          </h1>
-          <p className="text-white/90 text-lg animate-fade-in-delay">
-            GitHub 프로젝트 기여도를 증명하세요
-          </p>
+    <div className="min-h-screen flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-dark relative overflow-hidden">
+        {/* Subtle background decoration */}
+        <div className="absolute inset-0 overflow-hidden opacity-20">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-600 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="card bg-white hover:shadow-2xl transition-shadow duration-300">
-          <div className="space-y-4">
+        <div className="relative z-10 flex flex-col justify-center px-16 w-full">
+          <div className="inline-flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl">
+              <BarChart3 className="w-9 h-9 text-purple-600" />
+            </div>
+            <h1 className="text-6xl font-bold text-white tracking-tight">
+              Tally
+            </h1>
+          </div>
+          <h2 className="text-3xl font-semibold text-white mb-4">
+            GitHub Analytics & Team Insights
+          </h2>
+          <p className="text-purple-200 text-xl leading-relaxed max-w-md">
+            프로젝트 기여도를 정확하게 측정하고 팀의 성과를 한눈에 파악하세요.
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-1/2 bg-gradient-dark lg:bg-white flex items-center justify-center p-8 relative overflow-hidden">
+        {/* Mobile background decoration */}
+        <div className="lg:hidden absolute inset-0 overflow-hidden opacity-20">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-600 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="w-full max-w-md relative z-10">
+          {/* Mobile Logo */}
+          <div className="lg:hidden mb-12 text-center">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                <BarChart3 className="w-6 h-6 text-purple-600" />
+              </div>
+              <h1 className="text-4xl font-bold text-white">Tally</h1>
+            </div>
+            <p className="text-purple-200">GitHub Analytics & Team Insights</p>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white lg:text-gray-900 mb-2">Welcome</h2>
+              <p className="text-purple-200 lg:text-gray-600">Sign in to access your analytics</p>
+            </div>
+
+            {/* GitHub Login Button */}
             <button
               onClick={handleGitHubLogin}
               disabled={isLoading}
-              className="w-full bg-gray-900 text-white px-6 py-4 rounded-lg font-semibold hover:bg-gray-800 hover:scale-105 transition-all duration-200 shadow-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full bg-white lg:bg-gray-900 text-gray-900 lg:text-white px-6 py-4 rounded-xl font-semibold hover:bg-gray-50 lg:hover:bg-gray-800 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>연결 중...</span>
+                  <span>Connecting...</span>
                 </>
               ) : (
                 <>
                   <Github className="w-5 h-5" />
-                  <span>GitHub으로 로그인</span>
+                  <span>Continue with GitHub</span>
                 </>
               )}
             </button>
 
             {isDevelopment && (
               <>
-                <div className="relative">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
+                    <div className="w-full border-t border-white/30 lg:border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-500">
-                      또는 (개발 모드)
+                    <span className="px-4 bg-gradient-dark lg:bg-white text-purple-200 lg:text-gray-500">
+                      Development Mode
                     </span>
                   </div>
                 </div>
@@ -150,27 +157,86 @@ export default function Login() {
                 {!showTokenInput ? (
                   <button
                     onClick={() => setShowTokenInput(true)}
-                    className="w-full text-primary-600 px-6 py-3 rounded-lg font-semibold border-2 border-primary-600 hover:bg-primary-50 hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+                    className="w-full text-white lg:text-gray-900 px-6 py-3 rounded-xl font-medium border-2 border-white/30 lg:border-gray-300 hover:bg-white/10 lg:hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2"
                   >
-                    <KeyRound className="w-5 h-5" />
-                    <span>Access Token으로 로그인</span>
+                    <Lock className="w-5 h-5" />
+                    <span>Developer Access</span>
                   </button>
+                ) : !isUnlocked ? (
+                  /* Access Code Screen */
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-3 bg-white/10 lg:bg-gray-100 rounded-full flex items-center justify-center">
+                        <Lock className="w-6 h-6 text-purple-200 lg:text-gray-600" />
+                      </div>
+                      <p className="text-sm text-purple-200 lg:text-gray-600">Enter Access Code</p>
+                    </div>
+                    <input
+                      type="password"
+                      value={accessCode}
+                      onChange={(e) => {
+                        setAccessCode(e.target.value);
+                        setError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (accessCode === ACCESS_CODE) {
+                            setIsUnlocked(true);
+                            setError("");
+                          } else {
+                            setError("Invalid access code");
+                          }
+                        }
+                      }}
+                      placeholder="••••"
+                      className="w-full px-4 py-3 bg-white/10 lg:bg-white border-2 border-white/30 lg:border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center text-2xl tracking-widest text-white lg:text-gray-900 placeholder-purple-300 lg:placeholder-gray-400"
+                      maxLength={4}
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowTokenInput(false);
+                          setAccessCode("");
+                          setError("");
+                        }}
+                        className="flex-1 px-4 py-3 border-2 border-white/30 lg:border-gray-300 rounded-xl font-medium text-white lg:text-gray-700 hover:bg-white/10 lg:hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (accessCode === ACCESS_CODE) {
+                            setIsUnlocked(true);
+                            setError("");
+                          } else {
+                            setError("Invalid access code");
+                          }
+                        }}
+                        className="flex-1 px-4 py-3 bg-white lg:bg-gray-900 text-gray-900 lg:text-white rounded-xl font-semibold hover:bg-gray-50 lg:hover:bg-gray-800"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <form onSubmit={handleTokenLogin} className="space-y-3">
+                  /* Token Input Form */
+                  <form onSubmit={handleTokenLogin} className="space-y-4">
                     <div>
                       <label
                         htmlFor="token"
-                        className="block text-sm font-medium text-gray-700 mb-2"
+                        className="block text-sm font-medium text-purple-200 lg:text-gray-700 mb-2"
                       >
-                        GitHub Personal Access Token (테스트용 - 아무거나 입력)
+                        GitHub Access Token
                       </label>
                       <input
                         id="token"
                         type="password"
                         value={accessToken}
                         onChange={(e) => setAccessToken(e.target.value)}
-                        placeholder="test123 (아무 텍스트)"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Enter any text for testing"
+                        className="w-full px-4 py-3 bg-white/10 lg:bg-white border-2 border-white/30 lg:border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white lg:text-gray-900 placeholder-purple-300 lg:placeholder-gray-400"
                         disabled={isLoading}
                       />
                     </div>
@@ -179,26 +245,28 @@ export default function Login() {
                         type="button"
                         onClick={() => {
                           setShowTokenInput(false);
+                          setIsUnlocked(false);
+                          setAccessCode("");
                           setAccessToken("");
                           setError("");
                         }}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        className="flex-1 px-4 py-3 border-2 border-white/30 lg:border-gray-300 rounded-xl font-medium text-white lg:text-gray-700 hover:bg-white/10 lg:hover:bg-gray-50"
                         disabled={isLoading}
                       >
-                        취소
+                        Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={isLoading || !accessToken.trim()}
-                        className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-white lg:bg-gray-900 text-gray-900 lg:text-white rounded-xl font-semibold hover:bg-gray-50 lg:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoading ? (
                           <span className="flex items-center justify-center gap-2">
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            로그인 중...
+                            Signing in...
                           </span>
                         ) : (
-                          "로그인"
+                          "Sign In"
                         )}
                       </button>
                     </div>
@@ -208,15 +276,16 @@ export default function Login() {
             )}
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-slide-in">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="p-4 bg-red-500/20 lg:bg-red-50 border-2 border-red-400/30 lg:border-red-200 rounded-xl">
+                <p className="text-sm text-red-200 lg:text-red-600">{error}</p>
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="mt-8 text-center text-white/80 text-sm">
-          <p>2025 Tally Analytics. All rights reserved.</p>
+            {/* Footer */}
+            <div className="text-center text-purple-300 lg:text-gray-500 text-sm pt-8">
+              <p>© 2025 Tally Analytics</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
