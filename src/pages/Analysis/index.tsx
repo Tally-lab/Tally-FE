@@ -8,13 +8,17 @@ import {
   Percent,
   Sparkles,
   FileText,
+  RefreshCw,
+  Clock,
 } from "lucide-react";
 import Header from "../../components/layout/Header";
 import StatsCard from "../../components/analysis/StatsCard";
 import RoleDistributionChart from "../../components/analysis/RoleDistributionChart";
 import ContributionList from "../../components/analysis/ContributionList";
+import CommitQualityCard from "../../components/analysis/CommitQualityCard";
+import PRQualityCard from "../../components/analysis/PRQualityCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import type { ContributionStats, PullRequest, Issue } from "../../types";
+import type { ContributionStats, PullRequest, Issue, CommitQualityMetrics, PRQualityMetrics } from "../../types";
 import { analysisAPI, aiAPI } from "../../services/api";
 
 export default function Analysis() {
@@ -29,10 +33,16 @@ export default function Analysis() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [commitQuality, setCommitQuality] = useState<CommitQualityMetrics | null>(null);
+  const [prQuality, setPRQuality] = useState<PRQualityMetrics | null>(null);
+  const [isLoadingQuality, setIsLoadingQuality] = useState(false);
 
   useEffect(() => {
     if (owner && repo) {
       fetchAnalysisData();
+      fetchQualityMetrics();
     }
   }, [owner, repo]);
 
@@ -63,6 +73,8 @@ export default function Analysis() {
       setStats(analysisResult);
       setPullRequests(analysisResult.pullRequests || []);
       setIssues(analysisResult.issues || []);
+      setLastUpdated(new Date());
+      setAiSummary(null); // 새로고침 시 AI 요약 초기화
     } catch (err: any) {
       console.error("분석 실패:", err);
 
@@ -85,19 +97,58 @@ export default function Analysis() {
     }
   };
 
+  // 새로고침 함수
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    await fetchAnalysisData();
+    await fetchQualityMetrics();
+    setIsRefreshing(false);
+  };
+
+  // 품질 메트릭 가져오기
+  const fetchQualityMetrics = async () => {
+    if (!owner || !repo) return;
+
+    try {
+      setIsLoadingQuality(true);
+
+      // 커밋 품질 및 PR 품질 분석 병렬 호출
+      const [commitQualityData, prQualityData] = await Promise.all([
+        analysisAPI.getCommitQuality(owner, repo),
+        analysisAPI.getPRQuality(owner, repo),
+      ]);
+
+      setCommitQuality(commitQualityData);
+      setPRQuality(prQualityData);
+    } catch (err: any) {
+      console.error("품질 메트릭 로드 실패:", err);
+      // 품질 메트릭은 선택적이므로 에러를 무시하고 계속 진행
+    } finally {
+      setIsLoadingQuality(false);
+    }
+  };
+
+  // 마지막 업데이트 시간 포맷
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return "";
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000);
+
+    if (diff < 60) return "방금 전";
+    if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+    return lastUpdated.toLocaleString("ko-KR");
+  };
+
   const fetchAISummary = async () => {
-    if (!owner || !repo || isLoadingAI) return;
+    if (!owner || !repo || isLoadingAI || !stats) return;
 
     try {
       setIsLoadingAI(true);
 
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : null;
-      const username = user?.username || user?.login || "";
-
-      if (!username) return;
-
-      const result = await aiAPI.analyzeWithAI(owner, repo, username);
+      // 이미 로드된 stats를 전달하여 중복 GitHub API 호출 방지
+      const result = await aiAPI.generateSummary(stats);
       setAiSummary(result.aiSummary);
     } catch (err: any) {
       console.error("AI 요약 실패:", err);
@@ -108,26 +159,13 @@ export default function Analysis() {
   };
 
   const handleDownloadMarkdown = async () => {
-    if (!owner || !repo || isDownloading) return;
+    if (!owner || !repo || isDownloading || !stats) return;
 
     try {
       setIsDownloading(true);
 
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : null;
-      const username = user?.username || user?.login || "";
-
-      if (!username) {
-        alert("사용자 정보를 찾을 수 없습니다.");
-        return;
-      }
-
-      // 백엔드에서 Markdown 리포트 받아오기
-      const response = await analysisAPI.downloadMarkdownReport(
-        owner,
-        repo,
-        username
-      );
+      // 이미 로드된 stats를 전달하여 빠르게 리포트 생성
+      const response = await analysisAPI.generateMarkdownReport(stats);
 
       // Blob 생성 및 다운로드
       const blob = new Blob([response.content], { type: "text/markdown" });
@@ -148,26 +186,13 @@ export default function Analysis() {
   };
 
   const handleDownloadHTML = async () => {
-    if (!owner || !repo || isDownloading) return;
+    if (!owner || !repo || isDownloading || !stats) return;
 
     try {
       setIsDownloading(true);
 
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : null;
-      const username = user?.username || user?.login || "";
-
-      if (!username) {
-        alert("사용자 정보를 찾을 수 없습니다.");
-        return;
-      }
-
-      // 백엔드에서 HTML 리포트 받아오기
-      const response = await analysisAPI.downloadHtmlReport(
-        owner,
-        repo,
-        username
-      );
+      // 이미 로드된 stats를 전달하여 빠르게 리포트 생성
+      const response = await analysisAPI.generateHtmlReport(stats);
 
       // Blob 생성 및 다운로드
       const blob = new Blob([response.content], { type: "text/html" });
@@ -188,26 +213,13 @@ export default function Analysis() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!owner || !repo || isDownloading) return;
+    if (!owner || !repo || isDownloading || !stats) return;
 
     try {
       setIsDownloading(true);
 
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : null;
-      const username = user?.username || user?.login || "";
-
-      if (!username) {
-        alert("사용자 정보를 찾을 수 없습니다.");
-        return;
-      }
-
-      // 백엔드에서 PDF 리포트 받아오기 (Base64 인코딩)
-      const response = await analysisAPI.downloadPdfReport(
-        owner,
-        repo,
-        username
-      );
+      // 이미 로드된 stats를 전달하여 빠르게 PDF 생성
+      const response = await analysisAPI.generatePdfReport(stats);
 
       // Base64 디코딩 및 Blob 생성
       const binaryString = atob(response.content);
@@ -288,7 +300,23 @@ export default function Analysis() {
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 break-words">
               {repo} 분석 결과
             </h2>
-            <p className="text-sm sm:text-base text-gray-600">{owner}의 기여도 분석</p>
+            <div className="flex items-center gap-3">
+              <p className="text-sm sm:text-base text-gray-600">{owner}의 기여도 분석</p>
+              {lastUpdated && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatLastUpdated()}</span>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="ml-1 p-1 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
+                    title="데이터 새로고침"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -345,6 +373,23 @@ export default function Analysis() {
             color="secondary"
           />
         </div>
+
+        {/* 코드 품질 분석 섹션 */}
+        {(commitQuality || prQuality) && (
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">코드 품질 분석</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {commitQuality && <CommitQualityCard metrics={commitQuality} />}
+              {prQuality && <PRQualityCard metrics={prQuality} />}
+            </div>
+          </div>
+        )}
+
+        {isLoadingQuality && !commitQuality && !prQuality && (
+          <div className="mb-8 flex justify-center">
+            <LoadingSpinner size="sm" text="품질 분석 중..." />
+          </div>
+        )}
 
         {/* AI 요약 섹션 */}
         <div className="mb-8 p-4 sm:p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-100">
