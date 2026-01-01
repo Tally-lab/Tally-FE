@@ -117,6 +117,36 @@ export const organizationAPI = {
 };
 
 /**
+ * AI 분석 관련 API
+ */
+export const aiAPI = {
+  // stats를 전달받아 AI 요약만 생성 (빠름 - Bedrock 호출만)
+  generateSummary: async (
+    stats: ContributionStats
+  ): Promise<{ aiSummary: string }> => {
+    const response = await api.post<{ aiSummary: string }>(
+      "/ai/summary",
+      { stats }
+    );
+    return response.data;
+  },
+
+  // 기존 방식 (느림 - GitHub API + Bedrock 호출)
+  analyzeWithAI: async (
+    owner: string,
+    repo: string,
+    username?: string
+  ): Promise<{ aiSummary: string }> => {
+    const params = username ? { username } : {};
+    const response = await api.get<{ aiSummary: string }>(
+      `/ai/analyze/${owner}/${repo}`,
+      { params }
+    );
+    return response.data;
+  },
+};
+
+/**
  * 분석 관련 API
  */
 export const analysisAPI = {
@@ -134,20 +164,35 @@ export const analysisAPI = {
     return response.data;
   },
 
+  // 코드 품질 분석 (향후 백엔드 엔드포인트 추가 예정)
+  getCodeQuality: async (owner: string, repo: string) => {
+    const response = await api.get(`/analysis/${owner}/${repo}/quality`);
+    return response.data;
+  },
+
+  // 커밋 품질 분석
+  getCommitQuality: async (owner: string, repo: string) => {
+    const response = await api.get(`/analysis/quality/commits/${owner}/${repo}`);
+    return response.data;
+  },
+
+  // PR 품질 분석
+  getPRQuality: async (owner: string, repo: string) => {
+    const response = await api.get(`/analysis/quality/prs/${owner}/${repo}`);
+    return response.data;
+  },
+
   // Markdown 리포트 다운로드
   downloadMarkdownReport: async (
     owner: string,
     repo: string,
     username?: string
-  ): Promise<string> => {
-    const params = username ? { username } : {};
-    const response = await api.get(
-      `/analysis/${owner}/${repo}/report/markdown`,
-      {
-        params,
-        responseType: "text",
-      }
-    );
+  ): Promise<{ content: string }> => {
+    const response = await api.post<{ content: string }>("/reports/markdown", {
+      owner,
+      repo,
+      username,
+    });
     return response.data;
   },
 
@@ -156,27 +201,85 @@ export const analysisAPI = {
     owner: string,
     repo: string,
     username?: string
-  ): Promise<string> => {
-    const params = username ? { username } : {};
-    const response = await api.get(`/analysis/${owner}/${repo}/report/html`, {
-      params,
-      responseType: "text",
+  ): Promise<{ content: string }> => {
+    const response = await api.post<{ content: string }>("/reports/html", {
+      owner,
+      repo,
+      username,
     });
     return response.data;
   },
 
-  // 기존 downloadReport (호환성 유지)
-  downloadReport: async (
+  // PDF 리포트 다운로드 (기존 방식 - 느림)
+  downloadPdfReport: async (
     owner: string,
     repo: string,
-    format: "markdown" | "html"
-  ): Promise<Blob> => {
-    const response = await api.get(
-      `/analysis/${owner}/${repo}/report/${format}`,
+    username?: string
+  ): Promise<{ content: string; filename: string }> => {
+    const response = await api.post<{ content: string; filename: string }>(
+      "/reports/pdf",
       {
-        responseType: "blob",
+        owner,
+        repo,
+        username,
       }
     );
+    return response.data;
+  },
+
+  // stats를 전달받아 Markdown 리포트 생성 (빠름)
+  generateMarkdownReport: async (
+    stats: ContributionStats
+  ): Promise<{ content: string }> => {
+    const response = await api.post<{ content: string }>(
+      "/reports/markdown/generate",
+      { stats }
+    );
+    return response.data;
+  },
+
+  // stats를 전달받아 HTML 리포트 생성 (빠름)
+  generateHtmlReport: async (
+    stats: ContributionStats
+  ): Promise<{ content: string }> => {
+    const response = await api.post<{ content: string }>(
+      "/reports/html/generate",
+      { stats }
+    );
+    return response.data;
+  },
+
+  // stats를 전달받아 PDF 리포트 생성 (빠름)
+  generatePdfReport: async (
+    stats: ContributionStats
+  ): Promise<{ content: string; filename: string }> => {
+    const response = await api.post<{ content: string; filename: string }>(
+      "/reports/pdf/generate",
+      { stats }
+    );
+    return response.data;
+  },
+};
+
+/**
+ * 캐시 관련 API (향후 백엔드 엔드포인트 추가 예정)
+ */
+export const cacheAPI = {
+  // 캐시 무효화
+  invalidate: async (repositoryId: string): Promise<{ success: boolean }> => {
+    const response = await api.post<{ success: boolean }>("/cache/invalidate", {
+      repositoryId,
+    });
+    return response.data;
+  },
+
+  // 캐시 통계 조회
+  getStats: async (): Promise<{
+    cacheHits: number;
+    cacheMisses: number;
+    hitRate: number;
+  }> => {
+    const response = await api.get("/cache/stats");
     return response.data;
   },
 };
