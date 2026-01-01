@@ -229,3 +229,51 @@ export interface ApiResponse<T> {
   message?: string;
   status: number;
 }
+
+/**
+ * 커밋 품질 메트릭
+ */
+export interface CommitQualityMetrics {
+  averageCommitSize: number;
+  conventionalCommitRate: number;
+  commitFrequency: number;
+  commitSizeDistribution: Record<string, number>;
+  commitTypeDistribution: Record<string, number>;
+  totalCommits: number;
+  conventionalCommits: number;
+  qualityGrade: QualityGrade;
+}
+
+/**
+ * PR 품질 메트릭
+ */
+export interface PRQualityMetrics {
+  averageReviewTimeHours: number;
+  averagePRSize: number;
+  reviewParticipationRate: number;
+  mergeRate: number;
+  totalPRs: number;
+  mergedPRs: number;
+  closedWithoutMergePRs: number;
+  openPRs: number;
+  prSizeDistribution: Record<string, number>;
+  totalReviews: number;
+  averageReviewsPerPR: number;
+  qualityGrade: QualityGrade;
+}
+
+/**
+ * 품질 등급
+ */
+export type QualityGrade = "A" | "B" | "C" | "D" | "F" | "N/A";
+
+/**
+ * 캐시 통계
+ */
+export interface CacheStats {
+  cacheHits: number;
+  cacheMisses: number;
+  totalRequests: number;
+  hitRate: number;
+  cacheEnabled: boolean;
+}
