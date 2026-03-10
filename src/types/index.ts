@@ -18,6 +18,7 @@ export interface ChatRequest {
   message: string;
   githubToken: string;
   conversationId: string;
+  selectedOrg?: string;
 }
 
 export interface ChatResponse {

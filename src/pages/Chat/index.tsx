@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bot, Sparkles, GitBranch, Activity, FileSearch } from 'lucide-react';
+import { Menu, Bot, Sparkles, GitBranch, Activity, FileSearch, Building2, ChevronDown } from 'lucide-react';
 import ChatMessage from '../../components/chat/ChatMessage';
 import ChatInput from '../../components/chat/ChatInput';
 import Sidebar from '../../components/chat/Sidebar';
-import { chatAPI } from '../../services/api';
+import { chatAPI, userAPI } from '../../services/api';
 import { getAccessToken, logout as authLogout } from '../../utils/auth';
 import type { ChatMessage as ChatMessageType, Conversation } from '../../types';
 
@@ -45,11 +46,31 @@ export default function Chat({ darkMode, onToggleDark }: Props) {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [organizations, setOrganizations] = useState<string[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<string>('');
+  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamingContentRef = useRef('');
 
   const activeConv = conversations.find((c) => c.id === activeConvId) || null;
   const messages = activeConv?.messages || [];
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (token) {
+      userAPI.getOrganizations(token).then((orgs) => {
+        setOrganizations(orgs);
+        const saved = localStorage.getItem('devpulse_selected_org');
+        if (saved && orgs.includes(saved)) {
+          setSelectedOrg(saved);
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedOrg) localStorage.setItem('devpulse_selected_org', selectedOrg);
+  }, [selectedOrg]);
 
   useEffect(() => {
     saveConversations(conversations);
@@ -110,16 +131,13 @@ export default function Chat({ darkMode, onToggleDark }: Props) {
 
     const convId = activeConvId || createConversation(text);
 
-    // Add user message
+    // Add user message + assistant placeholder and force immediate render
     const userMsg: ChatMessageType = {
       id: generateId(),
       role: 'user',
       content: text,
       timestamp: Date.now(),
     };
-    addMessage(convId, userMsg);
-
-    // Add placeholder assistant message
     const assistantMsg: ChatMessageType = {
       id: generateId(),
       role: 'assistant',
@@ -127,29 +145,44 @@ export default function Chat({ darkMode, onToggleDark }: Props) {
       timestamp: Date.now(),
       isStreaming: true,
     };
-    addMessage(convId, assistantMsg);
 
-    setIsStreaming(true);
+    flushSync(() => {
+      addMessage(convId, userMsg);
+      addMessage(convId, assistantMsg);
+      setIsStreaming(true);
+    });
+
     streamingContentRef.current = '';
 
+    let lastFlush = 0;
     await chatAPI.stream(
-      { message: text, githubToken: token, conversationId: convId },
+      { message: text, githubToken: token, conversationId: convId, selectedOrg: selectedOrg || undefined },
       (chunk) => {
         streamingContentRef.current += chunk;
-        updateLastAssistantMessage(convId, streamingContentRef.current, true);
+        const now = Date.now();
+        if (now - lastFlush > 50) {
+          lastFlush = now;
+          flushSync(() => {
+            updateLastAssistantMessage(convId, streamingContentRef.current, true);
+          });
+        }
       },
       () => {
-        updateLastAssistantMessage(convId, streamingContentRef.current, false);
-        setIsStreaming(false);
+        flushSync(() => {
+          updateLastAssistantMessage(convId, streamingContentRef.current, false);
+          setIsStreaming(false);
+        });
       },
       (error) => {
         console.error('Stream error:', error);
-        updateLastAssistantMessage(
-          convId,
-          streamingContentRef.current || '죄송합니다. 오류가 발생했습니다. 다시 시도해주세요.',
-          false
-        );
-        setIsStreaming(false);
+        flushSync(() => {
+          updateLastAssistantMessage(
+            convId,
+            streamingContentRef.current || '죄송합니다. 오류가 발생했습니다. 다시 시도해주세요.',
+            false
+          );
+          setIsStreaming(false);
+        });
       }
     );
   };
@@ -200,6 +233,44 @@ export default function Chat({ darkMode, onToggleDark }: Props) {
             </div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">DevPulse</span>
           </div>
+
+          {/* Organization Selector */}
+          {organizations.length > 0 && (
+            <div className="relative ml-auto">
+              <button
+                onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+              >
+                <Building2 size={14} className="text-brand-500" />
+                <span className="text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
+                  {selectedOrg || '조직 선택'}
+                </span>
+                <ChevronDown size={14} className={`text-gray-400 transition-transform ${orgDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {orgDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setOrgDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-20 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 max-h-64 overflow-y-auto">
+                    <button
+                      onClick={() => { setSelectedOrg(''); setOrgDropdownOpen(false); }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${!selectedOrg ? 'text-brand-600 dark:text-brand-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}
+                    >
+                      전체 (선택 안 함)
+                    </button>
+                    {organizations.map((org) => (
+                      <button
+                        key={org}
+                        onClick={() => { setSelectedOrg(org); setOrgDropdownOpen(false); }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${selectedOrg === org ? 'text-brand-600 dark:text-brand-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}
+                      >
+                        {org}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Messages */}
