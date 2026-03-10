@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Chat from './pages/Chat';
+import AuthCallback from './pages/AuthCallback';
 import { isAuthenticated } from './utils/auth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/chat"
           element={

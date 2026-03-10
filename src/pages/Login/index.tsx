@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Github, Loader2, Bot, Sun, Moon, ArrowRight, Sparkles, Shield, MessageSquare } from 'lucide-react';
-import { setUser } from '../../utils/auth';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 interface Props {
   darkMode: boolean;
@@ -9,31 +9,21 @@ interface Props {
 }
 
 export default function Login({ darkMode, onToggleDark }: Props) {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [token, setToken] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token.trim()) {
-      setError('GitHub Personal Access Token을 입력해주세요.');
-      return;
-    }
-
+  const handleGitHubLogin = async () => {
     try {
       setIsLoading(true);
       setError('');
 
-      setUser({
-        id: 'user',
-        username: 'Developer',
-        accessToken: token,
-      });
-      navigate('/chat');
-    } catch {
-      setError('로그인에 실패했습니다.');
-    } finally {
+      const response = await fetch(`${API_BASE_URL}/api/auth/github`);
+      if (!response.ok) throw new Error('서버에 연결할 수 없습니다.');
+
+      const data = await response.json();
+      window.location.href = data.authUrl;
+    } catch (err) {
+      setError('GitHub 로그인을 시작할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       setIsLoading(false);
     }
   };
@@ -115,7 +105,7 @@ export default function Login({ darkMode, onToggleDark }: Props) {
         </div>
       </div>
 
-      {/* Right — Login Form */}
+      {/* Right — Login */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8 relative">
         {/* Dark mode toggle */}
         <button
@@ -141,49 +131,26 @@ export default function Login({ darkMode, onToggleDark }: Props) {
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">시작하기</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              GitHub Personal Access Token을 입력하여 시작하세요.
+              GitHub 계정으로 로그인하여 팀 분석을 시작하세요.
             </p>
           </div>
 
-          {/* Token Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                GitHub Token
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
-                  <Github size={18} className="text-gray-400" />
-                </div>
-                <input
-                  type="password"
-                  value={token}
-                  onChange={(e) => { setToken(e.target.value); setError(''); }}
-                  placeholder="ghp_xxxxxxxxxxxx"
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all"
-                  disabled={isLoading}
-                />
-              </div>
-              <p className="mt-2 text-2xs text-gray-400 dark:text-gray-500">
-                Token은 로컬에만 저장되며 GitHub API 호출에만 사용됩니다.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !token.trim()}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-brand-600/25 hover:shadow-brand-600/40"
-            >
-              {isLoading ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <>
-                  시작하기
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
+          {/* GitHub Login Button */}
+          <button
+            onClick={handleGitHubLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
+          >
+            {isLoading ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <>
+                <Github size={20} />
+                GitHub로 로그인
+                <ArrowRight size={16} />
+              </>
+            )}
+          </button>
 
           {error && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-xl">
@@ -191,14 +158,14 @@ export default function Login({ darkMode, onToggleDark }: Props) {
             </div>
           )}
 
-          {/* Token guide */}
+          {/* Info */}
           <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-            <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Token 발급 방법</h3>
-            <ol className="text-2xs text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
-              <li>GitHub Settings &rarr; Developer settings</li>
-              <li>Personal access tokens &rarr; Tokens (classic)</li>
-              <li>Generate new token &rarr; repo 권한 선택</li>
-            </ol>
+            <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">안내</h3>
+            <ul className="text-2xs text-gray-500 dark:text-gray-400 space-y-1">
+              <li>• GitHub OAuth를 통해 안전하게 로그인합니다</li>
+              <li>• 레포지토리 읽기 권한(repo, read:org)을 사용합니다</li>
+              <li>• 토큰은 로컬에만 저장되며 서버에 저장하지 않습니다</li>
+            </ul>
           </div>
         </div>
       </div>
