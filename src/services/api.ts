@@ -1,287 +1,66 @@
-import axios from "axios";
-import type {
-  User,
-  Repository,
-  ContributionStats,
-  Organization,
-  OrganizationStats,
-} from "../types";
+import type { ChatRequest, ChatResponse } from '../types';
 
-// 백엔드 API 기본 URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Axios 인스턴스 생성
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 120000, // 30초 → 120초 (2분)
-});
-
-// 요청 인터셉터: 모든 요청에 Authorization 헤더 추가
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// 응답 인터셉터: 에러 처리
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
-      window.location.href = "/";
-    }
-    return Promise.reject(error);
-  }
-);
-
-/**
- * 인증 관련 API
- */
-export const authAPI = {
-  getAuthUrl: async (): Promise<string> => {
-    const response = await api.get<{ authUrl: string }>("/auth/github");
-    return response.data.authUrl;
-  },
-
-  login: async (accessToken: string): Promise<User> => {
-    const response = await api.post<User>("/auth/login", { accessToken });
-    return response.data;
-  },
-
-  handleCallback: async (
-    code: string
-  ): Promise<{ user: User; accessToken: string }> => {
-    const response = await api.get(`/auth/callback?code=${code}`);
-    return response.data;
-  },
-};
-
-/**
- * 레포지토리 관련 API
- */
-export const repositoryAPI = {
-  getUserRepositories: async (): Promise<Repository[]> => {
-    const response = await api.get<Repository[]>("/repositories");
-    return response.data;
-  },
-
-  getRepositoryCommits: async (owner: string, repo: string) => {
-    const response = await api.get(`/repositories/${owner}/${repo}/commits`);
-    return response.data;
-  },
-};
-
-/**
- * 조직 관련 API
- */
-export const organizationAPI = {
-  getUserOrganizations: async (): Promise<Organization[]> => {
-    const response = await api.get<Organization[]>("/organizations");
-    return response.data;
-  },
-
-  getOrganizationStats: async (
-    orgName: string,
-    username?: string
-  ): Promise<OrganizationStats> => {
-    const params = username ? { username } : {};
-    const response = await api.get<OrganizationStats>(
-      `/organizations/${orgName}/stats`,
-      { params }
-    );
-    return response.data;
-  },
-
-  getOrganizationRepositories: async (
-    orgName: string
-  ): Promise<Repository[]> => {
-    const response = await api.get<Repository[]>(
-      `/organizations/${orgName}/repositories`
-    );
-    return response.data;
-  },
-};
-
-/**
- * AI 분석 관련 API
- */
-export const aiAPI = {
-  // stats를 전달받아 AI 요약만 생성 (빠름 - Bedrock 호출만)
-  generateSummary: async (
-    stats: ContributionStats
-  ): Promise<{ aiSummary: string }> => {
-    const response = await api.post<{ aiSummary: string }>(
-      "/ai/summary",
-      { stats }
-    );
-    return response.data;
-  },
-
-  // 기존 방식 (느림 - GitHub API + Bedrock 호출)
-  analyzeWithAI: async (
-    owner: string,
-    repo: string,
-    username?: string
-  ): Promise<{ aiSummary: string }> => {
-    const params = username ? { username } : {};
-    const response = await api.get<{ aiSummary: string }>(
-      `/ai/analyze/${owner}/${repo}`,
-      { params }
-    );
-    return response.data;
-  },
-};
-
-/**
- * 분석 관련 API
- */
-export const analysisAPI = {
-  // 기여도 분석
-  analyzeContribution: async (
-    owner: string,
-    repo: string,
-    username?: string
-  ): Promise<ContributionStats> => {
-    const params = username ? { username } : {};
-    const response = await api.get<ContributionStats>(
-      `/analysis/${owner}/${repo}`,
-      { params }
-    );
-    return response.data;
-  },
-
-  // 코드 품질 분석 (향후 백엔드 엔드포인트 추가 예정)
-  getCodeQuality: async (owner: string, repo: string) => {
-    const response = await api.get(`/analysis/${owner}/${repo}/quality`);
-    return response.data;
-  },
-
-  // 커밋 품질 분석
-  getCommitQuality: async (owner: string, repo: string) => {
-    const response = await api.get(`/analysis/quality/commits/${owner}/${repo}`);
-    return response.data;
-  },
-
-  // PR 품질 분석
-  getPRQuality: async (owner: string, repo: string) => {
-    const response = await api.get(`/analysis/quality/prs/${owner}/${repo}`);
-    return response.data;
-  },
-
-  // Markdown 리포트 다운로드
-  downloadMarkdownReport: async (
-    owner: string,
-    repo: string,
-    username?: string
-  ): Promise<{ content: string }> => {
-    const response = await api.post<{ content: string }>("/reports/markdown", {
-      owner,
-      repo,
-      username,
+export const chatAPI = {
+  send: async (request: ChatRequest): Promise<ChatResponse> => {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
     });
-    return response.data;
+    if (!response.ok) throw new Error(`Chat failed: ${response.status}`);
+    return response.json();
   },
 
-  // HTML 리포트 다운로드
-  downloadHtmlReport: async (
-    owner: string,
-    repo: string,
-    username?: string
-  ): Promise<{ content: string }> => {
-    const response = await api.post<{ content: string }>("/reports/html", {
-      owner,
-      repo,
-      username,
-    });
-    return response.data;
-  },
+  stream: async (
+    request: ChatRequest,
+    onChunk: (text: string) => void,
+    onDone: () => void,
+    onError: (error: Error) => void,
+  ): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      });
 
-  // PDF 리포트 다운로드 (기존 방식 - 느림)
-  downloadPdfReport: async (
-    owner: string,
-    repo: string,
-    username?: string
-  ): Promise<{ content: string; filename: string }> => {
-    const response = await api.post<{ content: string; filename: string }>(
-      "/reports/pdf",
-      {
-        owner,
-        repo,
-        username,
+      if (!response.ok) {
+        throw new Error(`Stream failed: ${response.status}`);
       }
-    );
-    return response.data;
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No readable stream');
+
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        // SSE format: "data:chunk\n\n"
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            const data = line.slice(5);
+            if (data) onChunk(data);
+          } else if (line.length > 0 && !line.startsWith(':')) {
+            // Plain text chunk (non-SSE)
+            onChunk(line);
+          }
+        }
+      }
+      onDone();
+    } catch (error) {
+      onError(error instanceof Error ? error : new Error(String(error)));
+    }
   },
 
-  // stats를 전달받아 Markdown 리포트 생성 (빠름)
-  generateMarkdownReport: async (
-    stats: ContributionStats
-  ): Promise<{ content: string }> => {
-    const response = await api.post<{ content: string }>(
-      "/reports/markdown/generate",
-      { stats }
-    );
-    return response.data;
-  },
-
-  // stats를 전달받아 HTML 리포트 생성 (빠름)
-  generateHtmlReport: async (
-    stats: ContributionStats
-  ): Promise<{ content: string }> => {
-    const response = await api.post<{ content: string }>(
-      "/reports/html/generate",
-      { stats }
-    );
-    return response.data;
-  },
-
-  // stats를 전달받아 PDF 리포트 생성 (빠름)
-  generatePdfReport: async (
-    stats: ContributionStats
-  ): Promise<{ content: string; filename: string }> => {
-    const response = await api.post<{ content: string; filename: string }>(
-      "/reports/pdf/generate",
-      { stats }
-    );
-    return response.data;
-  },
-};
-
-/**
- * 캐시 관련 API (향후 백엔드 엔드포인트 추가 예정)
- */
-export const cacheAPI = {
-  // 캐시 무효화
-  invalidate: async (repositoryId: string): Promise<{ success: boolean }> => {
-    const response = await api.post<{ success: boolean }>("/cache/invalidate", {
-      repositoryId,
+  clearConversation: async (conversationId: string): Promise<void> => {
+    await fetch(`${API_BASE_URL}/api/chat/conversations/${conversationId}`, {
+      method: 'DELETE',
     });
-    return response.data;
-  },
-
-  // 캐시 통계 조회
-  getStats: async (): Promise<{
-    cacheHits: number;
-    cacheMisses: number;
-    hitRate: number;
-  }> => {
-    const response = await api.get("/cache/stats");
-    return response.data;
   },
 };
-
-export default api;

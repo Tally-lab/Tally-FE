@@ -1,47 +1,34 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import Login from "./pages/Login";
-import AuthCallback from "./pages/AuthCallback";
-import Dashboard from "./pages/Dashboard";
-import Analysis from "./pages/Analysis";
-import OrganizationDetail from "./pages/OrganizationDetail";
-import { isAuthenticated } from "./utils/auth";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import Login from './pages/Login';
+import Chat from './pages/Chat';
+import { isAuthenticated } from './utils/auth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated() ? <>{children}</> : <Navigate to="/" />;
 }
 
 function App() {
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('darkMode', String(darkMode));
+  }, [darkMode]);
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/" element={<Login darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />} />
         <Route
-          path="/dashboard"
+          path="/chat"
           element={
             <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/organization/:orgName"
-          element={
-            <ProtectedRoute>
-              <OrganizationDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analysis/:owner/:repo"
-          element={
-            <ProtectedRoute>
-              <Analysis />
+              <Chat darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
             </ProtectedRoute>
           }
         />
