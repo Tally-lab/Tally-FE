@@ -48,7 +48,7 @@ export default function CommitQualityChart({ data }: { data: CommitQualityData }
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          커밋 품질 — {data.repo}
+          작업 기록 품질 — {data.repo}
         </h3>
         <span
           className="text-xs font-bold px-2.5 py-1 rounded-full"
@@ -105,7 +105,7 @@ export default function CommitQualityChart({ data }: { data: CommitQualityData }
               </p>
             </div>
             <div className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">Conventional 준수율</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">커밋 규칙 준수율</p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {data.conventionalRate}%
               </p>

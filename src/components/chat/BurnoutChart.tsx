@@ -34,7 +34,7 @@ export default function BurnoutChart({ data }: { data: BurnoutData }) {
   return (
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-        번아웃 위험도 — {data.repo}
+        야근/과로 위험도 — {data.repo}
       </h3>
 
       {/* Risk Badges */}

@@ -36,8 +36,8 @@ function saveConversations(conversations: Conversation[]) {
 const SUGGESTED_PROMPTS = [
   { icon: GitBranch, text: '내 레포지토리 목록 보여줘', color: 'text-blue-500' },
   { icon: Activity, text: '우리 팀 건강 상태 진단해줘', color: 'text-green-500' },
-  { icon: FileSearch, text: 'Tally-BE 커밋 품질 분석해줘', color: 'text-amber-500' },
-  { icon: Sparkles, text: 'DORA 메트릭 계산해줘', color: 'text-brand-500' },
+  { icon: FileSearch, text: 'Tally-BE 작업 기록 품질 분석해줘', color: 'text-amber-500' },
+  { icon: Sparkles, text: '개발 속도와 안정성 분석해줘', color: 'text-brand-500' },
 ];
 
 export default function Chat({ darkMode, onToggleDark }: Props) {

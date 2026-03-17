@@ -29,13 +29,13 @@ export default function BusFactorChart({ data }: { data: BusFactorData }) {
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Bus Factor — {data.repo}
+          코드 의존도 — {data.repo}
         </h3>
         <span
           className="text-xs font-bold px-2.5 py-1 rounded-full"
           style={{ backgroundColor: color + '20', color }}
         >
-          Bus Factor: {data.busFactor} ({riskLabel(data.busFactor)})
+          핵심 기여자 수: {data.busFactor}명 ({riskLabel(data.busFactor)})
         </span>
       </div>
 

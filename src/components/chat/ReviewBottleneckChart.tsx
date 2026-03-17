@@ -36,7 +36,7 @@ export default function ReviewBottleneckChart({ data }: { data: ReviewBottleneck
   return (
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-        리뷰 병목 — {data.repo}
+        코드 리뷰 대기 현황 — {data.repo}
       </h3>
 
       {/* Summary Cards */}

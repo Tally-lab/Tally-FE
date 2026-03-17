@@ -32,7 +32,7 @@ export default function CompareReposChart({ data }: { data: CompareReposData }) 
   return (
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-        레포 비교 — {data.username}
+        프로젝트 비교 — {data.username}
       </h3>
 
       {/* Activity Chart (commits & PRs) */}
@@ -84,7 +84,7 @@ export default function CompareReposChart({ data }: { data: CompareReposData }) 
                     <p className="font-semibold mb-1">{label}</p>
                     {payload.map((p) => (
                       <p key={p.dataKey as string} style={{ color: p.color }}>
-                        {p.dataKey === 'conventionalRate' ? 'Conventional 준수율' : 'PR 머지율'}:{' '}
+                        {p.dataKey === 'conventionalRate' ? '커밋 규칙 준수율' : 'PR 반영율'}:{' '}
                         {p.value}%
                       </p>
                     ))}
@@ -95,7 +95,7 @@ export default function CompareReposChart({ data }: { data: CompareReposData }) 
             <Legend
               wrapperStyle={{ fontSize: '11px' }}
               formatter={(value: string) =>
-                value === 'conventionalRate' ? 'Conventional 준수율' : 'PR 머지율'
+                value === 'conventionalRate' ? '커밋 규칙 준수율' : 'PR 반영율'
               }
             />
             <Bar dataKey="conventionalRate" fill={METRIC_COLORS.conventionalRate} radius={[4, 4, 0, 0]} />

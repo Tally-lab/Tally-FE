@@ -53,7 +53,7 @@ export default function DoraChart({ data }: { data: DoraData }) {
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          DORA Metrics — {data.repo}
+          개발 속도와 안정성 — {data.repo}
         </h3>
         <span
           className="text-xs font-bold px-2.5 py-1 rounded-full"
@@ -116,7 +116,7 @@ export default function DoraChart({ data }: { data: DoraData }) {
                       <p style={{ color: GRADE_COLORS[d.grade] }}>
                         등급: {d.grade}
                       </p>
-                      <p className="text-gray-400">Elite 기준: {d.elite}</p>
+                      <p className="text-gray-400">최고 등급 기준: {d.elite}</p>
                     </div>
                   );
                 }}
