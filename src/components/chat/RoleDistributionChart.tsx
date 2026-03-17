@@ -50,7 +50,7 @@ export default function RoleDistributionChart({ data }: { data: RoleDistribution
   return (
     <div className="my-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-        역할 분포 — {data.repo} ({data.username})
+        작업 유형 분포 — {data.repo} ({data.username})
       </h3>
 
       <div className="flex flex-col md:flex-row gap-4">

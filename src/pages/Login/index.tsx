@@ -37,7 +37,7 @@ export default function Login({ darkMode, onToggleDark }: Props) {
     {
       icon: Shield,
       title: '팀 건강 진단',
-      desc: 'Bus Factor, DORA 메트릭, 번아웃 위험을 감지합니다',
+      desc: '코드 의존도, 개발 속도, 야근/과로 위험을 감지합니다',
     },
     {
       icon: Sparkles,
