@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bot, Sparkles, GitBranch, Activity, FileSearch, Building2, ChevronDown } from 'lucide-react';
+import { Menu, Bot, Sparkles, GitBranch, Activity, FileSearch, Building2, ChevronDown, BookOpen } from 'lucide-react';
 import ChatMessage from '../../components/chat/ChatMessage';
 import ChatInput from '../../components/chat/ChatInput';
 import Sidebar from '../../components/chat/Sidebar';
@@ -36,7 +36,7 @@ function saveConversations(conversations: Conversation[]) {
 const SUGGESTED_PROMPTS = [
   { icon: GitBranch, text: '내 레포지토리 목록 보여줘', color: 'text-blue-500' },
   { icon: Activity, text: '우리 팀 건강 상태 진단해줘', color: 'text-green-500' },
-  { icon: FileSearch, text: 'Tally-BE 작업 기록 품질 분석해줘', color: 'text-amber-500' },
+  { icon: BookOpen, text: '이 프로젝트 기술 스택 분석해줘', color: 'text-amber-500' },
   { icon: Sparkles, text: '개발 속도와 안정성 분석해줘', color: 'text-brand-500' },
 ];
 
