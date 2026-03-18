@@ -7,6 +7,7 @@ import CommitQualityChart from './CommitQualityChart';
 import ReviewBottleneckChart from './ReviewBottleneckChart';
 import CompareReposChart from './CompareReposChart';
 import RoleDistributionChart from './RoleDistributionChart';
+import TechStackChart from './TechStackChart';
 
 interface Props {
   content: string;
@@ -21,7 +22,7 @@ function normalizeMarkdown(raw: string): string {
     .replace(/(\*\*[^*]+\*\*[^\n]*)\n([-*] )/g, '$1\n\n$2');
 }
 
-type ChartType = 'dora' | 'busfactor' | 'burnout' | 'commitquality' | 'reviewbottleneck' | 'comparerepos' | 'roledistr';
+type ChartType = 'dora' | 'busfactor' | 'burnout' | 'commitquality' | 'reviewbottleneck' | 'comparerepos' | 'roledistr' | 'techstack';
 
 interface ChartEntry {
   type: ChartType;
@@ -84,6 +85,11 @@ const CHART_CONFIGS: { label: string; type: ChartType; validate: (d: Record<stri
     label: 'ROLEDISTR_CHART',
     type: 'roledistr',
     validate: (d) => !!d.repo && !!d.roles,
+  },
+  {
+    label: 'TECHSTACK_CHART',
+    type: 'techstack',
+    validate: (d) => !!d.repo && Array.isArray(d.categories),
   },
 ];
 
@@ -202,6 +208,8 @@ function renderChart(chart: ChartEntry, key: string) {
       return <CompareReposChart key={key} data={chart.data as never} />;
     case 'roledistr':
       return <RoleDistributionChart key={key} data={chart.data as never} />;
+    case 'techstack':
+      return <TechStackChart key={key} data={chart.data as never} />;
     default:
       return null;
   }
