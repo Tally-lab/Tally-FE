@@ -1,4 +1,5 @@
-import { Plus, MessageSquare, Trash2, Sun, Moon, LogOut, X } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Sun, Moon, LogOut, X, LayoutDashboard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { Conversation } from '../../types';
 
 interface Props {
@@ -18,6 +19,8 @@ export default function Sidebar({
   conversations, activeId, onSelect, onNew, onDelete,
   darkMode, onToggleDark, onLogout, isOpen, onClose,
 }: Props) {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* Mobile overlay */}
@@ -48,14 +51,21 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* New Chat */}
-        <div className="p-3">
+        {/* New Chat + Overview */}
+        <div className="p-3 space-y-1.5">
           <button
             onClick={() => { onNew(); onClose(); }}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-all"
           >
             <Plus size={16} />
             새 대화
+          </button>
+          <button
+            onClick={() => { navigate('/overview'); onClose(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <LayoutDashboard size={15} />
+            프로젝트 개요
           </button>
         </div>
 

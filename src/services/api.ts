@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatResponse } from '../types';
+import type { ChatRequest, ChatResponse, ProjectOverview } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -10,6 +10,16 @@ export const userAPI = {
       body: JSON.stringify({ githubToken }),
     });
     if (!response.ok) throw new Error(`Failed to fetch organizations: ${response.status}`);
+    return response.json();
+  },
+};
+
+export const overviewAPI = {
+  get: async (githubToken: string, owner: string, repo: string): Promise<ProjectOverview> => {
+    const response = await fetch(`${API_BASE_URL}/api/overview/${owner}/${repo}`, {
+      headers: { 'X-GitHub-Token': githubToken },
+    });
+    if (!response.ok) throw new Error(`Overview failed: ${response.status}`);
     return response.json();
   },
 };

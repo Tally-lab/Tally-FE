@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Chat from './pages/Chat';
+import Overview from './pages/Overview';
 import AuthCallback from './pages/AuthCallback';
 import { isAuthenticated } from './utils/auth';
 
@@ -31,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Chat darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/overview"
+          element={
+            <ProtectedRoute>
+              <Overview darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
             </ProtectedRoute>
           }
         />
