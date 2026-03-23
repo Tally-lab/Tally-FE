@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   Bot, MessageSquare, Users, GitBranch, GitPullRequest,
   ExternalLink, ChevronDown, ArrowLeft, Shield, Activity,
-  Sun, Moon, Loader2,
+  Sun, Moon, Loader2, FileText,
 } from 'lucide-react';
 import TechStackChart from '../../components/chat/TechStackChart';
-import { overviewAPI, userAPI } from '../../services/api';
+import { overviewAPI, userAPI, reportAPI } from '../../services/api';
 import { getAccessToken } from '../../utils/auth';
 import type { ProjectOverview } from '../../types';
 
@@ -34,6 +34,7 @@ export default function Overview({ darkMode, onToggleDark }: Props) {
   const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
   const [data, setData] = useState<ProjectOverview | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
   const [error, setError] = useState('');
 
   const token = getAccessToken();
@@ -333,13 +334,34 @@ export default function Overview({ darkMode, onToggleDark }: Props) {
             )}
 
             {/* CTA */}
-            <button
-              onClick={() => navigate('/chat')}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-700 text-white font-medium text-sm hover:from-brand-600 hover:to-brand-800 transition-all shadow-lg shadow-brand-500/20"
-            >
-              <MessageSquare size={16} />
-              채팅으로 자세히 분석하기
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/chat')}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-700 text-white font-medium text-sm hover:from-brand-600 hover:to-brand-800 transition-all shadow-lg shadow-brand-500/20"
+              >
+                <MessageSquare size={16} />
+                채팅으로 자세히 분석하기
+              </button>
+              <button
+                onClick={async () => {
+                  if (!token || !selectedOrg || !selectedRepo) return;
+                  setReportLoading(true);
+                  try {
+                    const report = await reportAPI.generate(token, selectedOrg, selectedRepo);
+                    navigate(`/report/${report.reportId}`);
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : '리포트 생성 실패');
+                  } finally {
+                    setReportLoading(false);
+                  }
+                }}
+                disabled={reportLoading}
+                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-brand-500 text-brand-600 dark:text-brand-400 font-medium text-sm hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-all disabled:opacity-50"
+              >
+                {reportLoading ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                {reportLoading ? '생성 중...' : '종합 리포트'}
+              </button>
+            </div>
           </div>
         )}
       </main>

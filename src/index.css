@@ -93,3 +93,30 @@
     @apply bg-gray-50 dark:bg-gray-800/30;
   }
 }
+
+/* 리포트 인쇄 최적화 */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .report-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Recharts SVG 색상 보장 */
+  .recharts-wrapper,
+  .recharts-surface {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

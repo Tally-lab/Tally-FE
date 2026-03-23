@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Overview from './pages/Overview';
 import AuthCallback from './pages/AuthCallback';
+import Report from './pages/Report';
 import { isAuthenticated } from './utils/auth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/report/:reportId" element={<Report />} />
       </Routes>
     </Router>
   );
