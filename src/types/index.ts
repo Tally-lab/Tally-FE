@@ -62,3 +62,35 @@ export interface ProjectOverview {
     }[];
   };
 }
+
+export interface ReportData {
+  reportId: string;
+  owner: string;
+  repo: string;
+  generatedAt: string;
+  analysisPeriodDays: number;
+  dora: unknown;
+  busFactor: unknown;
+  burnout: unknown;
+  commitQuality: unknown;
+  reviewBottleneck: unknown;
+  roleDistribution: unknown;
+  techStack: unknown;
+  recentActivity: unknown;
+  aiDiagnosis: {
+    doraInterpretation: string;
+    busFactorInterpretation: string;
+    burnoutInterpretation: string;
+    commitQualityInterpretation: string;
+    reviewBottleneckInterpretation: string;
+    immediateActions: ActionItem[];
+    improvements: ActionItem[];
+    strengths: ActionItem[];
+  };
+}
+
+export interface ActionItem {
+  icon: string;
+  title: string;
+  description: string;
+}
