@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { setAccessToken } from '../../utils/auth';
 import { Loader2 } from 'lucide-react';
@@ -9,8 +9,12 @@ export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const calledRef = useRef(false);
 
   useEffect(() => {
+    if (calledRef.current) return;
+    calledRef.current = true;
+
     const code = searchParams.get('code');
     if (!code) {
       setError('인증 코드가 없습니다.');
@@ -19,7 +23,11 @@ export default function AuthCallback() {
 
     (async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/github/callback?code=${code}`);
+        const res = await fetch(`${API_BASE_URL}/api/auth/github/callback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
         if (!res.ok) throw new Error('토큰 교환 실패');
 
         const data = await res.json();
